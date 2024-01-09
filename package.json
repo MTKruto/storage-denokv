@@ -1,0 +1,19 @@
+{
+  "name": "@mtkruto/storage-denokv",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "rimraf dist/ && tsc"
+  },
+  "devDependencies": {
+    "@deno/kv": "^0.7.0",
+    "@mtkruto/node": "^0.1.141",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@deno/kv-darwin-arm64": "^0.7.0"
+  }
+}
