@@ -1,4 +1,4 @@
-import { GetManyFilter, Storage, StorageKeyPart } from "@mtkruto/node";
+import type { GetManyFilter, Storage, StorageKeyPart } from "@mtkruto/node";
 import * as Deno from "@deno/kv";
 
 function assertInitialized(kv: Deno.Kv | null | undefined) {
@@ -8,13 +8,12 @@ function assertInitialized(kv: Deno.Kv | null | undefined) {
   return kv;
 }
 
-export class StorageDenoKV extends Storage implements Storage {
+export class StorageDenoKV implements Storage {
   kv: Deno.Kv | null = null;
   #id: string | null = null;
   #path?: string;
 
   constructor(path = "./.mtkruto") {
-    super();
     this.#path = path;
   }
 
@@ -24,16 +23,6 @@ export class StorageDenoKV extends Storage implements Storage {
 
   get id() {
     return this.#id;
-  }
-
-  get supportsFiles() {
-    return false;
-  }
-
-  branch(id: string) {
-    const storage = new StorageDenoKV(this.path);
-    storage.#id = id;
-    return storage;
   }
 
   #fixKey(key: readonly StorageKeyPart[]) {
@@ -46,6 +35,30 @@ export class StorageDenoKV extends Storage implements Storage {
 
   async initialize() {
     this.kv = await Deno.openKv(this.path);
+  }
+
+  async set(key: readonly StorageKeyPart[], value: unknown) {
+    key = this.#fixKey(key);
+    const kv = assertInitialized(this.kv);
+
+    if (value == null) {
+      await kv.delete(key);
+    } else {
+      await kv.set(key, value);
+    }
+  }
+
+  async incr(key: readonly StorageKeyPart[], by: number) {
+    key = this.#fixKey(key);
+    const kv = assertInitialized(this.kv);
+
+    let result: Awaited<ReturnType<Deno.AtomicOperation["commit"]>> | null =
+      null;
+    while (!result?.ok) {
+      const count = await kv.get<number>(key);
+      result = await kv.atomic().check(count).set(key, (count.value || 0) + by)
+        .commit();
+    }
   }
 
   async get<T>(key: readonly StorageKeyPart[]) {
@@ -88,27 +101,21 @@ export class StorageDenoKV extends Storage implements Storage {
     }
   }
 
-  async set(key: readonly StorageKeyPart[], value: unknown) {
-    key = this.#fixKey(key);
-    const kv = assertInitialized(this.kv);
-
-    if (value == null) {
-      await kv.delete(key);
-    } else {
-      await kv.set(key, value);
-    }
+  branch(id: string) {
+    const storage = new StorageDenoKV(this.path);
+    storage.#id = id;
+    return storage;
   }
 
-  async incr(key: readonly StorageKeyPart[], by: number) {
-    key = this.#fixKey(key);
-    const kv = assertInitialized(this.kv);
+  get supportsFiles(): boolean {
+    return false;
+  }
 
-    let result: Awaited<ReturnType<Deno.AtomicOperation["commit"]>> | null =
-      null;
-    while (!result?.ok) {
-      const count = await kv.get<number>(key);
-      result = await kv.atomic().check(count).set(key, (count.value || 0) + by)
-        .commit();
-    }
+  get mustSerialize(): boolean {
+    return true;
+  }
+
+  get isMemory(): boolean {
+    return false;
   }
 }

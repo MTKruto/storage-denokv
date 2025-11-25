@@ -1,6 +1,6 @@
 {
   "name": "@mtkruto/storage-denokv",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "",
   "main": "dist/index.js",
   "license": "MIT",
@@ -8,9 +8,9 @@
     "build": "rimraf dist/ && tsc"
   },
   "devDependencies": {
-    "@deno/kv": "^0.7.0",
-    "@mtkruto/node": "^0.1.141",
-    "rimraf": "^5.0.5",
-    "typescript": "^5.3.3"
+    "@deno/kv": "^0.13.0",
+    "@mtkruto/node": "^0.76.0",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.9.3"
   }
 }
